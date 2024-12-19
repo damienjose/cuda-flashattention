@@ -74,4 +74,4 @@ The optimized implementation achieves a **3x speedup** compared to the naive GPU
 - Damien Jose ([damien.jose@gmail.com](mailto:damien.jose@gmail.com))
 
 ## Acknowledgments
-This project was done as part of the AUT24 GPU Compute course at the University of Washington. 
+This project was done as part of the AUT24 GPU Compute course at the University of Washington. We thank Professor Colin N. Reinhardt and TAs Arnab Karmakar, Xiaxi Shen for guiding us throughout this course. We also appreciate the authors of Flash Attention for their contributions and open sourcing their code.
