@@ -340,43 +340,6 @@ __global__ void shared_softmax(float* attentionScores, float* softmaxScores) {
     }
 }
 
-//// CUDA kernel for applying softmax
-//__global__ void shared_softmax(float* attentionScores, float* softmaxScores) {
-//    int tx = threadIdx.x;
-//    int ty = threadIdx.y;
-//
-//    int Row = blockIdx.y;
-//    int Col = tx;
-//
-//    __shared__ float ds_scores[NUM_SAMPLES];
-//
-//    if (Row < NUM_SAMPLES && Col < NUM_SAMPLES) {
-//        ds_scores[Col] = attentionScores[Row * NUM_SAMPLES + Col];
-//    }
-//    else {
-//        ds_scores[Col] = -1e30f;
-//    }
-//    __syncthreads();
-//
-//    if (Row < NUM_SAMPLES && Col < NUM_SAMPLES) {
-//        float max_val = -1e10f;
-//        for (int i = 0; i < NUM_SAMPLES; i++) {
-//            max_val = fmax(max_val, ds_scores[i]);
-//        }
-//
-//        ds_scores[Col] = expf(ds_scores[Col] - max_val);
-//    }
-//    __syncthreads();
-//
-//    if (Row < NUM_SAMPLES && Col < NUM_SAMPLES) {
-//        float exp_sum = 0.0f;
-//        for (int j = 0; j < NUM_SAMPLES; j++) {
-//            exp_sum += ds_scores[j];
-//        }
-//        softmaxScores[Row * NUM_SAMPLES + Col] = ds_scores[Col] / exp_sum;
-//    }
-//}
-
 // CUDA kernel for computing output = softmax_scores * V
 __global__ void shared_compute_output(float* softmaxScores, float* valueMatrix, float* outputMatrix) {
 
@@ -508,9 +471,9 @@ int main() {
     generateRandomMatrix(valueMatrix, NUM_SAMPLES, FEATURE_DIMENSION);
     transposeMatrix(keyMatrix, transposedKeyMatrix, NUM_SAMPLES, FEATURE_DIMENSION);
 
-    /*printMatrix(queryMatrix, NUM_SAMPLES, FEATURE_DIMENSION, "Query Matrix");
+    printMatrix(queryMatrix, NUM_SAMPLES, FEATURE_DIMENSION, "Query Matrix");
     printMatrix(keyMatrix, NUM_SAMPLES, FEATURE_DIMENSION, "Key Matrix");
-    printMatrix(valueMatrix, NUM_SAMPLES, FEATURE_DIMENSION, "Value Matrix");*/
+    printMatrix(valueMatrix, NUM_SAMPLES, FEATURE_DIMENSION, "Value Matrix");
 
     // Time CPU
     cudaEvent_t start, stop;
@@ -524,8 +487,8 @@ int main() {
     cudaEventElapsedTime(&cpu_milliseconds, start, stop);
 
     // Print CPU Matrices
-    //printMatrix(attentionScoresCPU, NUM_SAMPLES, NUM_SAMPLES, "CPU Attention Scores");
-    //printMatrix(outputCPU, NUM_SAMPLES, FEATURE_DIMENSION, "CPU Output Matrix");
+    printMatrix(attentionScoresCPU, NUM_SAMPLES, NUM_SAMPLES, "CPU Attention Scores");
+    printMatrix(outputCPU, NUM_SAMPLES, FEATURE_DIMENSION, "CPU Output Matrix");
 
     // Time GPU Global
     float gpu_global_milliseconds = 0;
@@ -534,8 +497,8 @@ int main() {
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&gpu_global_milliseconds, start, stop);
-    //printMatrix(attentionScoresGlobal, NUM_SAMPLES, NUM_SAMPLES, "GPU Global Attention Scores");
-    //printMatrix(outputGPUGlobal, NUM_SAMPLES, FEATURE_DIMENSION, "GPU Global Output Matrix");
+    printMatrix(attentionScoresGlobal, NUM_SAMPLES, NUM_SAMPLES, "GPU Global Attention Scores");
+    printMatrix(outputGPUGlobal, NUM_SAMPLES, FEATURE_DIMENSION, "GPU Global Output Matrix");
 
     // Time GPU Shared
     float gpu_shared_milliseconds = 0;
@@ -544,8 +507,8 @@ int main() {
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&gpu_shared_milliseconds, start, stop);
-    //printMatrix(attentionScoresShared, NUM_SAMPLES, NUM_SAMPLES, "GPU Shared Attention Scores");
-    //printMatrix(outputGPUShared, NUM_SAMPLES, FEATURE_DIMENSION, "GPU Shared Output Matrix");
+    printMatrix(attentionScoresShared, NUM_SAMPLES, NUM_SAMPLES, "GPU Shared Attention Scores");
+    printMatrix(outputGPUShared, NUM_SAMPLES, FEATURE_DIMENSION, "GPU Shared Output Matrix");
 
     // Compare Outputs
     compareMatrices(attentionScoresCPU, attentionScoresGlobal, NUM_SAMPLES, NUM_SAMPLES, "GPU Global Memory vs CPU Attention Map");
@@ -553,9 +516,9 @@ int main() {
     compareMatrices(outputCPU, outputGPUGlobal, NUM_SAMPLES, FEATURE_DIMENSION, "GPU Global Memory vs CPU Output");
     compareMatrices(outputCPU, outputGPUShared, NUM_SAMPLES, FEATURE_DIMENSION, "GPU Shared Memory vs CPU Output");
 
-    //printf("\nCPU Execution Time: %.3f ms\n", cpu_milliseconds);
-    //printf("GPU Global Execution Time: %.3f ms\n", gpu_global_milliseconds);
-    //printf("GPU Shared Execution Time: %.3f ms\n", gpu_shared_milliseconds);
+    printf("\nCPU Execution Time: %.3f ms\n", cpu_milliseconds);
+    printf("GPU Global Execution Time: %.3f ms\n", gpu_global_milliseconds);
+    printf("GPU Shared Execution Time: %.3f ms\n", gpu_shared_milliseconds);
 
     delete[] queryMatrix;
     delete[] keyMatrix;
